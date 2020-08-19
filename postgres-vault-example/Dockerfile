@@ -1,5 +1,5 @@
 FROM docker.io/openjdk:11-jre-slim
 
-COPY target/*.jar /app.jar
+COPY target/*.jar /deployments/app.jar
 
-CMD ["java", "-jar", "/app.jar"]
+CMD ["java", "-jar", "/deployments/app.jar"]

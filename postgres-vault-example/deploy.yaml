@@ -1,4 +1,15 @@
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spring-boot-postgres-properties
+data:
+  application.properties: |-
+    spring.datasource.url=jdbc:postgresql://postgresql:5432/testdb
+    spring.datasource.username=postgres
+    spring.datasource.password=password
+    spring.jpa.hibernate.ddl-auto=create
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,6 +31,13 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8080
+          volumeMounts:
+            - name: application-properties
+              mountPath: /deployments/config
+      volumes:
+        - name: application-properties
+          configMap:
+            name: spring-boot-postgres-properties
 ---
 apiVersion: v1
 kind: Service

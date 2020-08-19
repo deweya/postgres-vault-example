@@ -1,0 +1,5 @@
+postgresqlUsername: postgres
+postgresqlPassword: password
+postgresqlDatabase: testdb
+service:
+  type: NodePort

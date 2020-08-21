@@ -16,23 +16,37 @@ spec:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: "example"
 
-        vault.hashicorp.com/secret-volume-path-application-properties: "/deployments/config"
-        vault.hashicorp.com/agent-inject-secret-application-properties: "secret/data/myapp/config"
-        vault.hashicorp.com/agent-inject-template-application-properties: |-
+        vault.hashicorp.com/secret-volume-path-application.properties: "/deployments/config"
+        vault.hashicorp.com/agent-inject-secret-application.properties: "secret/data/myapp/config"
+        vault.hashicorp.com/agent-inject-template-application.properties: |-
           {{- with secret "secret/myapp/config" -}}
-          spring.datasource.url=jdbc:postgresql://postgresql:5432/testdb
+          spring.datasource.url=jdbc:postgresql://postgres-postgresql:5432/widget
           spring.datasource.username={{ .Data.data.username }}
           spring.datasource.password={{ .Data.data.password }}
-          spring.jpa.hibernate.ddl-auto=create
-          {{- end }}
+          spring.jpa.hibernate.ddl-auto=none
+
+          management.endpoints.web.exposure.include=refresh,health
+          {{- end -}}
     spec:
       containers:
         - name: main
           image: quay.io/adewey/spring-boot-postgres
+          imagePullPolicy: Always
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8080
+        - name: inotifywait
+          image: docker.io/pstauffer/inotify:v1.0.1
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |-
+              while true; do
+                inotifywait -e modify /deployments/config/application.properties;
+                curl localhost:8080/actuator/refresh -X POST;
+              done
       serviceAccountName: vault-auth
 ---
 apiVersion: v1
@@ -47,4 +61,4 @@ spec:
       protocol: TCP
   selector:
     app: spring-boot-postgres
-  type: NodePort
+  type: ClusterIP

@@ -1,5 +1,7 @@
 postgresqlUsername: postgres
 postgresqlPassword: password
-postgresqlDatabase: testdb
+postgresqlDatabase: widget
 service:
-  type: NodePort
+  type: ClusterIP
+persistence:
+  enabled: false

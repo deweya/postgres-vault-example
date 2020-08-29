@@ -43,7 +43,7 @@ path "secret/data/myapp/*" {
 EOF
 
 ## Create some test data at the secret/myapp path
-echo "INFO: Adding test data to secret/myapp"
+echo "INFO: Adding test data to secret/myapp/config"
 vault kv put secret/myapp/config username='widget_blue' \
         password='password'
 

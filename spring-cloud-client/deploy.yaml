@@ -1,0 +1,61 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spring-cloud-client
+data:
+  bootstrap.yml: |-
+    server:
+      port: 8080
+    spring:
+      application:
+        name: myapp(_)config
+      cloud:
+        config:
+          uri: http://spring-cloud-server:8888
+    management.endpoints.web.exposure.include: refresh, health
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-cloud-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-cloud-client
+  template:
+    metadata:
+      labels:
+        app: spring-cloud-client
+    spec:
+      containers:
+        - name: main
+          image: quay.io/adewey/spring-cloud-client
+          imagePullPolicy: Always
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+          volumeMounts:
+            - name: config
+              mountPath: /deployments/config/
+      serviceAccountName: vault-auth
+      volumes:
+        - name: config
+          configMap:
+            name: spring-cloud-client
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-cloud-client
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: spring-cloud-client
+  type: ClusterIP

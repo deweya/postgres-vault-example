@@ -1,0 +1,73 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spring-cloud-server
+data:
+  bootstrap.yml: |-
+    server:
+      port: 8888
+    spring:
+      profiles:
+        active: vault
+      cloud:
+        config:
+          server:
+            health:
+              repositories:
+                myapp:
+                  name: myapp/config 
+            vault:
+              port: 8200
+              host: vault
+              kvVersion: 2
+              backend: secret
+              defaultKey: ""
+              authentication: KUBERNETES
+              kubernetes:
+                role: example
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-cloud-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-cloud-server
+  template:
+    metadata:
+      labels:
+        app: spring-cloud-server
+    spec:
+      containers:
+        - name: main
+          image: quay.io/adewey/spring-cloud-server
+          imagePullPolicy: Always
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+          volumeMounts:
+            - name: config
+              mountPath: /deployments/config/
+      serviceAccountName: vault-auth
+      volumes:
+        - name: config
+          configMap:
+            name: spring-cloud-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-cloud-server
+spec:
+  ports:
+    - name: http
+      port: 8888
+      targetPort: 8888
+      protocol: TCP
+  selector:
+    app: spring-cloud-server
+  type: ClusterIP

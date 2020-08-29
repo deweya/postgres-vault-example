@@ -1,0 +1,22 @@
+server:
+  port: 8888
+spring:
+  profiles:
+    active: vault
+  cloud:
+    config:
+      server:
+        health:
+          repositories:
+            myapp:
+              name: myapp/config 
+        vault:
+          port: 8200
+          host: localhost
+          kvVersion: 2
+          backend: secret
+          defaultKey: ""
+          authentication: KUBERNETES
+          kubernetes:
+            role: example
+            service-account-token-file: /home/adewey/test/postgres-vault-rotate-creds/config/token

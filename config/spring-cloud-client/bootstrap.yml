@@ -1,0 +1,11 @@
+server:
+  port: 8080
+spring:
+  application:
+    # The (_) is required in order to say myapp/config (otherwise spring throws an error because it doesn't understand the slash)
+    # https://stackoverflow.com/questions/43435897/how-to-escape-a-slash-character-within-a-branch-name-label-in-spring-cloud-con
+    name: myapp(_)config
+  cloud:
+    config:
+      uri: http://localhost:8888
+management.endpoints.web.exposure.include: refresh, health

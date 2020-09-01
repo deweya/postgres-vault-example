@@ -20,3 +20,8 @@ spring:
           kubernetes:
             role: example
             service-account-token-file: /home/adewey/test/postgres-vault-rotate-creds/config/token
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: user
+    password: password

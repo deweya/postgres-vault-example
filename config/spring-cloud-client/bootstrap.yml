@@ -8,4 +8,14 @@ spring:
   cloud:
     config:
       uri: http://localhost:8888
-management.endpoints.web.exposure.include: refresh, health
+    bus:
+      enabled: true
+      refresh:
+        enabled: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: user
+    password: password
+
+management.endpoints.web.exposure.include: refresh, health, bus-refresh

@@ -1,4 +1,45 @@
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spring-boot-postgres
+data:
+  vault-agent-config.hcl: |-
+    vault {
+      address = "http://vault:8200"
+    }
+
+    pid_file = "/home/vault/.pid"
+
+    auto_auth {
+      method "kubernetes" {
+        mount_path = "auth/kubernetes"
+        config = {
+          role = "example"
+          jwt = "@/var/run/secrets/kubernetes.io/serviceaccount/token"
+        }
+      }
+
+      sink "file" {
+        config = {
+          path = "/home/vault/.token"
+        }
+      }
+    }
+
+    template {
+      destination = "/deployments/config/application.properties"
+      contents = <<EOF
+    {{- with secret "secret/myapp/config" -}}
+    spring.datasource.url=jdbc:postgresql://postgres-postgresql:5432/widget
+    spring.datasource.username={{ .Data.data.username }}
+    spring.datasource.password={{ .Data.data.password }}
+    spring.jpa.hibernate.ddl-auto=none
+    management.endpoints.web.exposure.include=refresh,health
+    {{- end -}}
+    EOF
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,22 +53,23 @@ spec:
     metadata:
       labels:
         app: spring-boot-postgres
-      annotations:
-        vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/role: "example"
-
-        vault.hashicorp.com/secret-volume-path-application.properties: "/deployments/config"
-        vault.hashicorp.com/agent-inject-secret-application.properties: "secret/data/myapp/config"
-        vault.hashicorp.com/agent-inject-template-application.properties: |-
-          {{- with secret "secret/myapp/config" -}}
-          spring.datasource.url=jdbc:postgresql://postgres-postgresql:5432/widget
-          spring.datasource.username={{ .Data.data.username }}
-          spring.datasource.password={{ .Data.data.password }}
-          spring.jpa.hibernate.ddl-auto=none
-
-          management.endpoints.web.exposure.include=refresh,health
-          {{- end -}}
     spec:
+      initContainers:
+        - name: vault-agent-init
+          image: vault
+          args:
+            - agent
+            - -config=/etc/vault/vault-agent-config.hcl
+            - -log-level=debug
+            - -exit-after-auth
+          env:
+            - name: SKIP_SETCAP
+              value: "true"
+          volumeMounts:
+            - mountPath: /etc/vault/
+              name: config
+            - mountPath: /deployments/config
+              name: shared-data
       containers:
         - name: main
           image: quay.io/adewey/spring-boot-postgres
@@ -36,6 +78,23 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8080
+          volumeMounts:
+            - mountPath: /deployments/config
+              name: shared-data
+        - name: vault-agent
+          image: vault
+          args:
+            - agent
+            - -config=/etc/vault/vault-agent-config.hcl
+            - log-level=debug
+          env:
+            - name: SKIP_SETCAP
+              value: "true"
+          volumeMounts:
+            - mountPath: /etc/vault/
+              name: config
+            - mountPath: /deployments/config
+              name: shared-data
         - name: inotifywait
           image: docker.io/pstauffer/inotify:v1.0.1
           command:
@@ -47,6 +106,16 @@ spec:
                 inotifywait -e modify /deployments/config/application.properties;
                 curl localhost:8080/actuator/refresh -X POST;
               done
+          volumeMounts:
+            - mountPath: /deployments/config
+              name: shared-data
+      volumes:
+        - name: config
+          configMap:
+            name: spring-boot-postgres
+        - name: shared-data
+          emptyDir:
+            medium: Memory
       serviceAccountName: vault-auth
 ---
 apiVersion: v1

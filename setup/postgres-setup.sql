@@ -11,6 +11,8 @@ grant usage, select on sequence hibernate_sequence to widget;
 
 create role widget_blue login password 'password' in role widget;
 
-create role widget_green login password 'password' in role widget;
+create role widget_green nologin password 'password' in role widget;
 
+-- Run these to switch to the "green" role
+alter role widget_green login;
 alter role widget_blue nologin; 

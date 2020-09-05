@@ -1,6 +1,6 @@
 # Auto-Refreshing Spring Connection Pools on Kubernetes with Vault
 
-Accompanying Blog Post: TBD
+Accompanying Blog Post: https://austindewey.com/2020/09/05/auto-refreshing-spring-connection-pools-on-kubernetes-with-vault/
 
 This is a quick demo covering how you can automatically refresh Spring's Connection pool when Vault Agent pulls in updated database credentials. Below demonstrates the architecture you will build.
 
@@ -36,7 +36,7 @@ This section will set up Vault and Postgres, which Spring Boot will interact wit
 
 ## Deploying the Spring Boot App
 
-This section deploys the Spring Boot app by using the [postgres-vault-example/deploy.yaml](./postgres-vault-example/deploy.yaml) script. The contents of this file are described in the accompanying blog post.
+This section deploys the Spring Boot app by using the [postgres-vault-example/deploy.yaml](./postgres-vault-example/deploy.yaml) script. The contents of this file are described in the [accompanying blog post](https://austindewey.com/2020/09/05/auto-refreshing-spring-connection-pools-on-kubernetes-with-vault/).
 
 Apply this file by running the command below:
 

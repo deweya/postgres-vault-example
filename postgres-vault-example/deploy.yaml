@@ -74,6 +74,10 @@ spec:
         - name: main
           image: quay.io/adewey/spring-boot-postgres
           imagePullPolicy: Always
+          ## This env var is required because Spring Cloud expects to connect to a remove config server by default, which we are not in this demo
+          env:
+            - name: SPRING_CLOUD_CONFIG_ENABLED
+              value: "false"
           readinessProbe:
             httpGet:
               path: /actuator/health

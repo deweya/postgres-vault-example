@@ -1,18 +1,12 @@
-create table customer (
-  id bigint primary key not null,
-  first_name varchar(255),
-  last_name varchar(255)
+CREATE TABLE customer (
+  id BIGINT PRIMARY KEY NOT NULL,
+  first_name VARCHAR(255),
+  last_name VARCHAR(255)
 );
-create sequence hibernate_sequence start 1 increment 1;
+CREATE SEQUENCE hibernate_sequence START 1 INCREMENT 1;
 
-create role widget nologin inherit;
-grant all privileges on customer to widget;
-grant usage, select on sequence hibernate_sequence to widget;
+CREATE ROLE widget NOLOGIN INHERIT;
+GRANT ALL privileges ON customer TO widget;
+GRANT usage, SELECT ON SEQUENCE hibernate_sequence TO widget;
 
-create role widget_blue login password 'password' in role widget;
-
-create role widget_green nologin password 'password' in role widget;
-
--- Run these to switch to the "green" role
-alter role widget_green login;
-alter role widget_blue nologin; 
+CREATE ROLE widget_blue LOGIN PASSWORD 'widget_blue_pass' IN ROLE widget;

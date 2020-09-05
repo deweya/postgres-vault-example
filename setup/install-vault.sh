@@ -1,13 +1,11 @@
 #!/bin/bash
 
 ## Create vault-auth SA
-if kubectl get sa vault-auth; then
-  echo "INFO: serviceaccount 'vault-auth' already present"
-else
-  echo "INFO: creating serviceaccount 'vault-auth'..."
-  kubectl create sa vault-auth
-fi
-kubectl apply -f vault-auth-service-account.yaml
+kubectl apply -f vault-serviceaccount.yaml
+
+## Add the hashicorp chart repo
+helm repo add hashicorp https://helm.releases.hashicorp.com
+helm repo update
 
 ## Install vault via Helm and wait for vault to become ready
 if helm list -f vault | grep vault; then
@@ -45,7 +43,7 @@ EOF
 ## Create some test data at the secret/myapp path
 echo "INFO: Adding test data to secret/myapp"
 vault kv put secret/myapp/config username='widget_blue' \
-        password='password'
+        password='widget_blue_pass'
 
 ## Get SA JWT token and SA CA cert
 echo "INFO: Getting SA JWT and CA"

@@ -4,7 +4,6 @@
 echo "INFO: Running kubectl port-forward in the background"
 kubectl port-forward svc/postgres-postgresql 5432:5432 &
 export PF_PID_POSTGRES=$!
-trap "kill $PF_PID_POSTGRES" EXIT
 echo "INFO: Waiting for port-forward to start"
 sleep 5
 
@@ -17,7 +16,7 @@ export VAULT_ADDR=http://localhost:8200
 echo "INFO: Running kubectl port-forward in the background"
 kubectl port-forward svc/vault 8200:8200 &
 export PF_PID_VAULT=$!
-trap "kill $PF_PID_VAULT" EXIT
+trap "kill $PF_PID_POSTGRES $PF_PID_VAULT" EXIT
 echo "INFO: Waiting for port-forward to start"
 sleep 5
 

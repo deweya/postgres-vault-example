@@ -1,5 +1,11 @@
 # Auto-Refreshing Spring Connection Pools on Kubernetes with Vault
 
+**Update Sept 14, 2020**: I recently learned that you can instruct Vault Agent to run a command after rendering your template by using the **command** setting in your Vault Agent config. This eliminates the need of the inotifywait container that this post describes, although you can use inotifywait instead of the command setting if you want greater control over how modify events are handled.
+
+For more information on the command setting, please refer to the [Vault Agent Template documentation](https://www.vaultproject.io/docs/agent/template#configuration).
+
+---
+
 Accompanying Blog Post: https://austindewey.com/2020/09/05/auto-refreshing-spring-connection-pools-on-kubernetes-with-vault/
 
 This is a quick demo covering how you can automatically refresh Spring's Connection pool when Vault Agent pulls in updated database credentials. Below demonstrates the architecture you will build.

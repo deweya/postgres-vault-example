@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## Create vault-auth SA
-kubectl apply -f vault-serviceaccount.yaml
+oc apply -f vault-serviceaccount.yaml
 
 ## Add the hashicorp chart repo
 helm repo add hashicorp https://helm.releases.hashicorp.com
@@ -13,7 +13,7 @@ if helm list -f vault | grep vault; then
 else
   echo "INFO: installing vault via helm..."
   helm install vault hashicorp/vault --values vault-values.yaml --wait
-  until [[ $(kubectl get statefulset vault -o jsonpath="{.status.readyReplicas}") == 1 ]]; do
+  until [[ $(oc get statefulset vault -o jsonpath="{.status.readyReplicas}") == 1 ]]; do
     echo "INFO: waiting for vault to become ready..."
     sleep 5
   done
@@ -21,8 +21,8 @@ fi
 
 ## Port forward requests to vault in the background
 export VAULT_ADDR=http://localhost:8200
-echo "INFO: Running kubectl port-forward in the background"
-kubectl port-forward svc/vault 8200:8200 &
+echo "INFO: Running oc port-forward in the background"
+oc port-forward svc/vault 8200:8200 &
 export PF_PID=$!
 trap "kill $PF_PID" EXIT
 echo "INFO: Waiting for port-forward to start"
@@ -47,10 +47,10 @@ vault kv put secret/myapp/config username='widget_blue' \
 
 ## Get SA JWT token and SA CA cert
 echo "INFO: Getting SA JWT and CA"
-export SA_SECRET=$(kubectl get sa vault-auth -o jsonpath="{.secrets[0].name}")
-export SA_JWT_TOKEN=$(kubectl get secret $SA_SECRET \
+export SA_SECRET=$(oc get sa vault-auth -o jsonpath="{.secrets[0].name}")
+export SA_JWT_TOKEN=$(oc get secret $SA_SECRET \
     -o jsonpath="{.data.token}" | base64 --decode)
-export SA_CA_CRT=$(kubectl get secret $SA_SECRET \
+export SA_CA_CRT=$(oc get secret $SA_SECRET \
     -o jsonpath="{.data['ca\.crt']}" | base64 --decode)
 
 ## Enable kubernetes auth
@@ -68,6 +68,6 @@ vault write auth/kubernetes/config \
 echo "INFO: Creating vault role"
 vault write auth/kubernetes/role/example \
         bound_service_account_names=vault-auth \
-        bound_service_account_namespaces=default \
+        bound_service_account_namespaces=adewey-test \
         policies=myapp-kv-ro \
         ttl=24h

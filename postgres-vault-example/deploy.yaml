@@ -9,7 +9,7 @@ data:
       address = "http://vault:8200"
     }
 
-    pid_file = "/home/vault/.pid"
+    pid_file = "/deployments/config/.pid"
 
     auto_auth {
       method "kubernetes" {
@@ -22,13 +22,14 @@ data:
 
       sink "file" {
         config = {
-          path = "/home/vault/.token"
+          path = "/deployments/config/.token"
         }
       }
     }
 
     template {
       destination = "/deployments/config/application.properties"
+      command = "curl localhost:8080/actuator/refresh"
       contents = <<EOF
     {{- with secret "secret/myapp/config" -}}
     spring.datasource.url=jdbc:postgresql://postgres-postgresql:5432/widget
@@ -56,7 +57,7 @@ spec:
     spec:
       initContainers:
         - name: vault-agent-init
-          image: vault
+          image: "docker.io/vault:1.6.2"
           args:
             - agent
             - -config=/etc/vault/vault-agent-config.hcl
@@ -72,7 +73,7 @@ spec:
               name: shared-data
       containers:
         - name: main
-          image: quay.io/adewey/spring-boot-postgres
+          image: "quay.io/adewey/spring-boot-postgres:openshift"
           imagePullPolicy: Always
           ## This env var is required because Spring Cloud expects to connect to a remove config server by default, which we are not in this demo
           env:
@@ -86,7 +87,7 @@ spec:
             - mountPath: /deployments/config
               name: shared-data
         - name: vault-agent
-          image: vault
+          image: "docker.io/vault:1.6.2"
           args:
             - agent
             - -config=/etc/vault/vault-agent-config.hcl
@@ -97,20 +98,6 @@ spec:
           volumeMounts:
             - mountPath: /etc/vault/
               name: config
-            - mountPath: /deployments/config
-              name: shared-data
-        - name: inotifywait
-          image: docker.io/pstauffer/inotify:v1.0.1
-          command:
-            - /bin/sh
-            - -c
-          args:
-            - |-
-              while true; do
-                inotifywait -e modify /deployments/config/application.properties;
-                curl localhost:8080/actuator/refresh -X POST;
-              done
-          volumeMounts:
             - mountPath: /deployments/config
               name: shared-data
       volumes:
